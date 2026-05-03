@@ -33,17 +33,17 @@ python main.py
 
 ## Project Structure
 Software-Engineering_Group-13/
-    controllers/
-        app_controller.py   # Connects UI to data logic
-models/
-    tasks_model.py  # Handles data storage and CSV logic
-data/
-    tasks.csv   # Stores all task data
-tests/
-    test_task_model.py  # Unit tests for model
-    test_integration.py # Integration tests
-views/  # UI screens (Tkinter)
-main.py # Launches the application
+-controllers/
+---app_controller.py   # Connects UI to data logic
+-models/
+---tasks_model.py  # Handles data storage and CSV logic
+-data/
+---tasks.csv   # Stores all task data
+-tests/
+---test_task_model.py  # Unit tests for model
+---test_integration.py # Integration tests
+-views/  # UI screens (Tkinter)
+-main.py # Launches the application
 
 
 ## Architecture Overview
