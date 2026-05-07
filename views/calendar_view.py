@@ -1,5 +1,5 @@
 import tkinter as tk
-from datetime import date, timedelta
+from datetime import date, datetime as date_time, timedelta
 from tkinter import font as tkfont
 from tkinter import ttk
 
@@ -42,7 +42,7 @@ class CalendarTask:
 
 
 class CalendarWindow(tk.Toplevel):
-    def __init__(self, master=None, home_command=None):
+    def __init__(self, master=None, home_command=None, tasks=None):
         tk.Toplevel.__init__(self, master)
 
         self.title("Calendar")
@@ -56,7 +56,7 @@ class CalendarWindow(tk.Toplevel):
         self.search_text = tk.StringVar()
         self.search_text.trace("w", self.refresh_from_search)
 
-        self.tasks = self.make_example_tasks()
+        self.tasks = self.normalise_tasks(tasks)
 
         self.force_segoe_ui_font()
         self.create_styles()
@@ -260,8 +260,141 @@ class CalendarWindow(tk.Toplevel):
         search_entry.grid(row=0, column=2, sticky="e", padx=16, pady=16, ipady=8)
         search_entry.insert(0, "")
 
-    def make_example_tasks(self):
-        return []
+    def normalise_tasks(self, tasks):
+        if tasks is None:
+            return []
+
+        calendar_tasks = []
+        for task in tasks:
+            calendar_task = self.normalise_task(task)
+            if calendar_task is not None:
+                calendar_tasks.append(calendar_task)
+
+        return calendar_tasks
+
+    def normalise_task(self, task):
+        if isinstance(task, CalendarTask):
+            return task
+
+        title = self.get_task_value(task, ["title", "name", "task_name", "task"])
+        task_date = self.get_task_value(task, ["task_date", "date", "day", "due_date", "deadline"])
+        start_hour = self.get_task_value(task, ["start_hour", "time", "start_time", "start"])
+        duration = self.get_task_value(task, ["duration", "length"])
+        priority = self.get_task_value(task, ["priority", "status"])
+
+        if title is None or task_date is None:
+            return None
+
+        parsed_date = self.parse_task_date(task_date)
+        if parsed_date is None:
+            return None
+
+        parsed_start_hour = self.parse_start_hour(start_hour)
+        parsed_duration = self.parse_duration(duration)
+        parsed_priority = self.parse_priority(priority)
+
+        return CalendarTask(
+            str(title),
+            parsed_date,
+            parsed_start_hour,
+            parsed_duration,
+            parsed_priority,
+        )
+
+    def get_task_value(self, task, possible_names):
+        for name in possible_names:
+            if isinstance(task, dict) and name in task:
+                return task[name]
+
+            if hasattr(task, name):
+                return getattr(task, name)
+
+        return None
+
+    def parse_task_date(self, value):
+        if isinstance(value, date):
+            return value
+
+        if value is None:
+            return None
+
+        value_text = str(value).strip()
+        date_formats = [
+            "%Y-%m-%d",
+            "%d/%m/%Y",
+            "%d/%m/%y",
+            "%d-%m-%Y",
+            "%d-%m-%y",
+        ]
+
+        for date_format in date_formats:
+            try:
+                return date_time.strptime(value_text, date_format).date()
+            except ValueError:
+                pass
+
+        return None
+
+    def parse_start_hour(self, value):
+        if value is None or value == "":
+            return None
+
+        if isinstance(value, int) or isinstance(value, float):
+            return float(value)
+
+        value_text = str(value).strip().upper()
+        time_formats = [
+            "%H:%M",
+            "%H.%M",
+            "%I:%M %p",
+            "%I %p",
+        ]
+
+        for time_format in time_formats:
+            try:
+                parsed_time = date_time.strptime(value_text, time_format)
+                return parsed_time.hour + parsed_time.minute / 60.0
+            except ValueError:
+                pass
+
+        try:
+            return float(value_text)
+        except ValueError:
+            return None
+
+    def parse_duration(self, value):
+        if value is None or value == "":
+            return 1.0
+
+        try:
+            return float(value)
+        except ValueError:
+            return 1.0
+
+    def parse_priority(self, value):
+        if value is None:
+            return "low"
+
+        priority = str(value).strip().lower()
+
+        if priority in ["high", "urgent", "important"]:
+            return "high"
+        if priority in ["medium", "med", "normal"]:
+            return "medium"
+        if priority in ["low", "minor"]:
+            return "low"
+
+        return "low"
+
+    def set_tasks(self, tasks):
+        self.tasks = self.normalise_tasks(tasks)
+        self.refresh()
+
+    def add_task(self, task):
+        calendar_task = self.normalise_task(task)
+        if calendar_task is not None:
+            self.tasks.append(calendar_task)
+            self.refresh()
 
     def refresh_from_search(self, name, index, mode):
         self.refresh()
@@ -561,8 +694,8 @@ class CalendarWindow(tk.Toplevel):
         return weeks
 
 
-def open_calendar(master=None, home_command=None):
-    return CalendarWindow(master, home_command)
+def open_calendar(master=None, home_command=None, tasks=None):
+    return CalendarWindow(master, home_command, tasks)
 
 
 if __name__ == "__main__":
