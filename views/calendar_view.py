@@ -6,7 +6,7 @@ from tkinter import ttk
 
 FONT_NAME = "Segoe UI"
 
-BLUE = "#2DA7FF"
+BLUE = "#1a1a2e"
 LIGHT_BLUE = "#DFF1FF"
 SIDEBAR_BG = "#0C2C75"
 SIDEBAR_TEXT = "#F4F7FF"
