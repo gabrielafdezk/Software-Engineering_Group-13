@@ -6,28 +6,40 @@ from tkinter import ttk
 
 FONT_NAME = "Segoe UI"
 
-BLUE = "#0A0D1A"
-LIGHT_BLUE = "#DFF1FF"
-SIDEBAR_BG = "#0A0D1A"
-SIDEBAR_TEXT = "#F4F7FF"
-MUTED_TEXT = "#AAB7D8"
-GRID_LINE = "#DDDDDD"
+# Dark palette — matches the rest of Smart-Task
+BG = "#0c0c14"               # main area / out-of-month cells
+SURFACE = "#14142a"          # sidebar, in-month cells
+SURFACE_2 = "#1a1a2e"        # top bar
+BORDER = "#1a1a2a"           # cell borders
+TEXT = "#e8e6f0"             # primary text
+MUTED = "#9896a8"            # secondary text
+TODAY_BG = "#1a3268"         # today cell background
+TODAY_FG = "#dff1ff"         # day number inside today
+OUT_OF_MONTH_FG = "#4a4a5a"  # dimmed previous/next-month day numbers
+
+# Aliases so the existing code reads naturally with the dark palette
+BLUE = TEXT
+LIGHT_BLUE = TODAY_BG
+SIDEBAR_BG = SURFACE
+SIDEBAR_TEXT = TEXT
+MUTED_TEXT = MUTED
+GRID_LINE = BORDER
 
 PRIORITY_COLOURS = {
     "high": {
-        "bg": "#F8D6D2",
+        "bg": "#3a1a1a",
         "border": "#E53935",
-        "text": "#7F1D1D",
+        "text": "#fca5a5",
     },
     "medium": {
-        "bg": "#FFF0C8",
+        "bg": "#3a2a14",
         "border": "#F4B400",
-        "text": "#7A5300",
+        "text": "#fcd34d",
     },
     "low": {
-        "bg": "#D9F2D0",
+        "bg": "#16321a",
         "border": "#4ECB3F",
-        "text": "#25651F",
+        "text": "#86efac",
     },
 }
 
@@ -44,7 +56,7 @@ class CalendarTask:
 class CalendarView(tk.Frame):
     def __init__(self, master=None, home_command=None, tasks=None):
         tk.Frame.__init__(self, master)
-        self.configure(bg="white")
+        self.configure(bg=BG)
 
 
         self.today = date.today()
@@ -86,30 +98,32 @@ class CalendarView(tk.Frame):
             "Nav.TButton",
             font=(FONT_NAME, 12),
             padding=(14, 7),
-            background="#F7F7F7",
-            foreground="#555555",
+            background=SURFACE_2,
+            foreground=MUTED,
             borderwidth=0,
             relief="flat",
         )
         style.map(
             "Nav.TButton",
-            background=[("active", "#ECECEC"), ("pressed", "#E2E2E2")],
-            foreground=[("active", "#222222")],
+            background=[("active", SURFACE), ("pressed", BG)],
+            foreground=[("active", TEXT)],
+
+
         )
 
         style.configure(
             "Today.TButton",
             font=(FONT_NAME, 11, "bold"),
             padding=(18, 7),
-            background="#F7F7F7",
-            foreground="#333333",
+            background=SURFACE_2,
+            foreground=TEXT,
             borderwidth=0,
             relief="flat",
         )
         style.map(
             "Today.TButton",
-            background=[("active", "#ECECEC"), ("pressed", "#E2E2E2")],
-            foreground=[("active", "#111111")],
+            background=[("active", SURFACE), ("pressed", BG)],
+            foreground=[("active", TEXT)],
         )
 
         style.configure("TButton", font=(FONT_NAME, 10))
@@ -117,12 +131,12 @@ class CalendarView(tk.Frame):
         style.configure(
             "Minimal.Vertical.TScrollbar",
             gripcount=0,
-            background="#B8B8B8",
-            darkcolor="#B8B8B8",
-            lightcolor="#B8B8B8",
-            troughcolor="#F7F7F7",
-            bordercolor="#F7F7F7",
-            arrowcolor="#F7F7F7",
+            background=MUTED,
+            darkcolor=MUTED,
+            lightcolor=MUTED,
+            troughcolor=SURFACE,
+            bordercolor=SURFACE,
+            arrowcolor=SURFACE,
             relief="flat",
             borderwidth=0,
             width=10,
@@ -154,7 +168,7 @@ class CalendarView(tk.Frame):
         self.sidebar.grid(row=0, column=0, sticky="ns")
         self.sidebar.grid_propagate(False)
 
-        self.main_area = tk.Frame(self, bg="white")
+        self.main_area = tk.Frame(self, bg=BG)
         self.main_area.grid(row=0, column=1, sticky="nsew")
         self.main_area.columnconfigure(0, weight=1)
         self.main_area.rowconfigure(1, weight=1)
@@ -162,7 +176,7 @@ class CalendarView(tk.Frame):
         self.create_sidebar()
         self.create_top_bar()
 
-        self.calendar_area = tk.Frame(self.main_area, bg="white")
+        self.calendar_area = tk.Frame(self.main_area, bg=BG)
         self.calendar_area.grid(row=1, column=0, sticky="nsew")
         self.calendar_area.columnconfigure(0, weight=1)
         self.calendar_area.rowconfigure(0, weight=1)
@@ -223,12 +237,12 @@ class CalendarView(tk.Frame):
         self.task_canvas.bind_all("<MouseWheel>", self.scroll_task_list)
 
     def create_top_bar(self):
-        top_bar = tk.Frame(self.main_area, bg="#F7F7F7", height=72)
+        top_bar = tk.Frame(self.main_area, bg=SURFACE_2, height=72)
         top_bar.grid(row=0, column=0, sticky="ew")
         top_bar.grid_propagate(False)
         top_bar.columnconfigure(1, weight=1)
 
-        navigation = tk.Frame(top_bar, bg="#F7F7F7")
+        navigation = tk.Frame(top_bar, bg=SURFACE_2)
         navigation.grid(row=0, column=0, sticky="w", padx=14, pady=16)
 
         ttk.Button(navigation, text="<", style="Nav.TButton", command=lambda: self.change_month(-1)).pack(side="left")
@@ -239,8 +253,9 @@ class CalendarView(tk.Frame):
             top_bar,
             text="Monthly Calendar",
             font=(FONT_NAME, 13, "bold"),
-            fg="#333333",
-            bg="#F7F7F7",
+            fg=TEXT,
+            bg=SURFACE_2,
+
         )
         top_month_title.grid(row=0, column=1, pady=16)
 
@@ -248,11 +263,11 @@ class CalendarView(tk.Frame):
             top_bar,
             textvariable=self.search_text,
             font=(FONT_NAME, 12),
-            bg="#E6E6E6",
-            fg="#333333",
+            bg=BG,
+            fg=TEXT,
             relief="flat",
             width=28,
-            insertbackground="#333333",
+            insertbackground=TEXT,
         )
         search_entry.grid(row=0, column=2, sticky="e", padx=16, pady=16, ipady=8)
         search_entry.insert(0, "")
@@ -566,7 +581,7 @@ class CalendarView(tk.Frame):
         self.task_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
     def draw_month_view(self):
-        month_frame = tk.Frame(self.calendar_area, bg="white")
+        month_frame = tk.Frame(self.calendar_area, bg=BG)
         month_frame.grid(row=0, column=0, sticky="nsew", padx=16, pady=16)
 
         for column in range(7):
@@ -582,7 +597,7 @@ class CalendarView(tk.Frame):
                 text=day_name,
                 font=(FONT_NAME, 11, "bold"),
                 fg=MUTED_TEXT,
-                bg="white",
+                bg=BG,
             ).grid(row=0, column=column, sticky="ew", pady=(0, 8))
 
         tasks_by_date = {}
@@ -598,9 +613,9 @@ class CalendarView(tk.Frame):
                 if shown_date == self.today:
                     background = LIGHT_BLUE
                 elif shown_date.month == self.current_date.month:
-                    background = "white"
+                    background = SURFACE
                 else:
-                    background = "#F6F6F6"
+                    background = BG
 
                 cell = tk.Frame(
                     month_frame,
@@ -611,7 +626,7 @@ class CalendarView(tk.Frame):
                 cell.grid(row=row, column=column, sticky="nsew")
                 cell.bind("<Button-1>", lambda event, selected=shown_date: self.choose_date(selected))
 
-                foreground = "#222222" if shown_date.month == self.current_date.month else "#AAAAAA"
+                foreground = TEXT if shown_date.month == self.current_date.month else OUT_OF_MONTH_FG
 
                 tk.Label(
                     cell,
