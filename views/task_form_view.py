@@ -3,119 +3,259 @@ from tkinter import messagebox
 from tkinter import ttk
 
 
-class TaskFormView:
-    def __init__(self, root, controller):
+FONT_NAME = "Segoe UI"
+
+BG_PRIMARY = "#0c0c14"
+BG_SECONDARY = "#1a1a2e"
+BG_CARD = "#14142a"
+TEXT_PRIMARY = "#e8e6f0"
+TEXT_SECONDARY = "#9896a8"
+BORDER_COLOR = "#1a1a2a"
+BLUE_ACCENT = "#185FA5"
+
+
+class TaskFormView(tk.Frame):
+    def __init__(self, parent, controller):
         """
         Task Form View for adding, editing, and searching tasks.
+        Designed to integrate as a page inside the main application.
         """
-        self.root = root
+        super().__init__(parent, bg=BG_PRIMARY)
+
         self.controller = controller
         self.selected_task_id = None
+        self.tasks = []
 
-        self.root.title("Add / Edit / Search Tasks")
+        self._build_ui()
+        self.load_tasks()
 
-        self.main_frame = tk.Frame(root)
-        self.main_frame.pack(padx=20, pady=20)
+    def _build_ui(self):
+        self.inner = tk.Frame(self, bg=BG_PRIMARY, padx=24, pady=20)
+        self.inner.pack(fill="both", expand=True)
 
-        self.form_frame = tk.Frame(self.main_frame)
-        self.form_frame.grid(row=0, column=0, padx=20)
-
-        self.list_frame = tk.Frame(self.main_frame)
-        self.list_frame.grid(row=0, column=1, padx=20)
-
-        tk.Label(self.form_frame, text="Task Name").grid(row=0, column=0, pady=5)
-        self.name_entry = tk.Entry(self.form_frame)
-        self.name_entry.grid(row=0, column=1, pady=5)
-
-        tk.Label(self.form_frame, text="Module").grid(row=1, column=0, pady=5)
-        self.module_entry = tk.Entry(self.form_frame)
-        self.module_entry.grid(row=1, column=1, pady=5)
-
-        tk.Label(self.form_frame, text="Deadline (YYYY-MM-DD)").grid(row=2, column=0, pady=5)
-        self.deadline_entry = tk.Entry(self.form_frame)
-        self.deadline_entry.grid(row=2, column=1, pady=5)
-
-        tk.Label(self.form_frame, text="Priority").grid(row=3, column=0, pady=5)
-        self.priority_entry = ttk.Combobox(
-            self.form_frame,
-            values=["High", "Medium", "Low"],
-            state="readonly"
+        # Title bar
+        title_bar = tk.Frame(
+            self.inner,
+            bg=BG_SECONDARY,
+            padx=18,
+            pady=12,
+            highlightbackground=BORDER_COLOR,
+            highlightthickness=1
         )
-        self.priority_entry.grid(row=3, column=1, pady=5)
+        title_bar.pack(fill="x", pady=(0, 16))
+
+        tk.Label(
+            title_bar,
+            text="Add / Edit / Search Tasks",
+            font=(FONT_NAME, 20, "bold"),
+            bg=BG_SECONDARY,
+            fg=TEXT_PRIMARY
+        ).pack(anchor="w")
+
+        tk.Label(
+            title_bar,
+            text="Create, update and find academic tasks",
+            font=(FONT_NAME, 10),
+            bg=BG_SECONDARY,
+            fg=TEXT_SECONDARY
+        ).pack(anchor="w")
+
+        # Main content
+        content = tk.Frame(self.inner, bg=BG_PRIMARY)
+        content.pack(fill="both", expand=True)
+
+        content.columnconfigure(0, weight=1, uniform="content")
+        content.columnconfigure(1, weight=1, uniform="content")
+        content.rowconfigure(0, weight=1)
+
+        # Left card: form
+        self.form_card = tk.Frame(
+            content,
+            bg=BG_CARD,
+            padx=22,
+            pady=20,
+            highlightbackground=BORDER_COLOR,
+            highlightthickness=1
+        )
+        self.form_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+
+        # Right card: search/list
+        self.list_card = tk.Frame(
+            content,
+            bg=BG_CARD,
+            padx=22,
+            pady=20,
+            highlightbackground=BORDER_COLOR,
+            highlightthickness=1
+        )
+        self.list_card.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
+
+        self._build_form()
+        self._build_search_list()
+
+    def _label(self, parent, text):
+        return tk.Label(
+            parent,
+            text=text,
+            font=(FONT_NAME, 11, "bold"),
+            bg=BG_CARD,
+            fg=TEXT_PRIMARY
+        )
+
+    def _entry(self, parent):
+        return tk.Entry(
+            parent,
+            font=(FONT_NAME, 11),
+            bg=BG_SECONDARY,
+            fg=TEXT_PRIMARY,
+            insertbackground=TEXT_PRIMARY,
+            relief="flat"
+        )
+
+    def _button(self, parent, text, command):
+        return tk.Button(
+            parent,
+            text=text,
+            command=command,
+            font=(FONT_NAME, 10, "bold"),
+            bg=BLUE_ACCENT,
+            fg="white",
+            activebackground="#2474C2",
+            activeforeground="white",
+            relief="flat",
+            padx=12,
+            pady=6,
+            cursor="hand2"
+        )
+
+    def _build_form(self):
+        tk.Label(
+            self.form_card,
+            text="Task Details",
+            font=(FONT_NAME, 15, "bold"),
+            bg=BG_CARD,
+            fg=TEXT_PRIMARY
+        ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 18))
+
+        self.form_card.columnconfigure(1, weight=1)
+
+        self._label(self.form_card, "Task Name").grid(row=1, column=0, sticky="w", pady=8)
+        self.name_entry = self._entry(self.form_card)
+        self.name_entry.grid(row=1, column=1, sticky="ew", pady=8, ipady=6)
+
+        self._label(self.form_card, "Module").grid(row=2, column=0, sticky="w", pady=8)
+        self.module_entry = self._entry(self.form_card)
+        self.module_entry.grid(row=2, column=1, sticky="ew", pady=8, ipady=6)
+
+        self._label(self.form_card, "Deadline").grid(row=3, column=0, sticky="w", pady=8)
+        self.deadline_entry = self._entry(self.form_card)
+        self.deadline_entry.grid(row=3, column=1, sticky="ew", pady=8, ipady=6)
+
+        tk.Label(
+            self.form_card,
+            text="YYYY-MM-DD",
+            font=(FONT_NAME, 9),
+            bg=BG_CARD,
+            fg=TEXT_SECONDARY
+        ).grid(row=4, column=1, sticky="w", pady=(0, 6))
+
+        self._label(self.form_card, "Priority").grid(row=5, column=0, sticky="w", pady=8)
+        self.priority_entry = ttk.Combobox(
+            self.form_card,
+            values=["High", "Medium", "Low"],
+            state="readonly",
+            font=(FONT_NAME, 10)
+        )
+        self.priority_entry.grid(row=5, column=1, sticky="ew", pady=8, ipady=4)
         self.priority_entry.set("Medium")
 
-        tk.Label(self.form_frame, text="Status").grid(row=4, column=0, pady=5)
+        self._label(self.form_card, "Status").grid(row=6, column=0, sticky="w", pady=8)
         self.status_entry = ttk.Combobox(
-            self.form_frame,
+            self.form_card,
             values=["Pending", "Completed"],
-            state="readonly"
+            state="readonly",
+            font=(FONT_NAME, 10)
         )
-        self.status_entry.grid(row=4, column=1, pady=5)
+        self.status_entry.grid(row=6, column=1, sticky="ew", pady=8, ipady=4)
         self.status_entry.set("Pending")
 
-        self.add_button = tk.Button(
-            self.form_frame,
-            text="Add Task",
-            command=self.add_task
-        )
-        self.add_button.grid(row=5, column=0, pady=10)
+        button_row = tk.Frame(self.form_card, bg=BG_CARD)
+        button_row.grid(row=7, column=0, columnspan=2, sticky="ew", pady=(24, 8))
+        button_row.columnconfigure(0, weight=1)
+        button_row.columnconfigure(1, weight=1)
 
-        self.update_button = tk.Button(
-            self.form_frame,
-            text="Update Task",
-            command=self.update_task
-        )
-        self.update_button.grid(row=5, column=1, pady=10)
+        self._button(button_row, "Add Task", self.add_task).grid(row=0, column=0, sticky="ew", padx=(0, 6))
+        self._button(button_row, "Update Task", self.update_task).grid(row=0, column=1, sticky="ew", padx=(6, 0))
 
-        self.clear_button = tk.Button(
-            self.form_frame,
+        clear_btn = tk.Button(
+            self.form_card,
             text="Clear Form",
-            command=self.clear_form
+            command=self.clear_form,
+            font=(FONT_NAME, 10, "bold"),
+            bg=BG_SECONDARY,
+            fg=TEXT_PRIMARY,
+            activebackground=BG_PRIMARY,
+            activeforeground=TEXT_PRIMARY,
+            relief="flat",
+            padx=12,
+            pady=6,
+            cursor="hand2"
         )
-        self.clear_button.grid(row=6, column=0, columnspan=2, pady=5)
+        clear_btn.grid(row=8, column=0, columnspan=2, sticky="ew", pady=(8, 0))
 
-        tk.Label(self.list_frame, text="Search Tasks").pack()
+    def _build_search_list(self):
+        tk.Label(
+            self.list_card,
+            text="Search Tasks",
+            font=(FONT_NAME, 15, "bold"),
+            bg=BG_CARD,
+            fg=TEXT_PRIMARY
+        ).pack(anchor="w", pady=(0, 12))
 
-        self.search_entry = tk.Entry(self.list_frame, width=35)
-        self.search_entry.pack(pady=5)
+        self.search_entry = self._entry(self.list_card)
+        self.search_entry.pack(fill="x", ipady=6, pady=(0, 10))
 
-        self.search_button = tk.Button(
-            self.list_frame,
-            text="Search",
-            command=self.search_tasks
+        search_buttons = tk.Frame(self.list_card, bg=BG_CARD)
+        search_buttons.pack(fill="x", pady=(0, 16))
+        search_buttons.columnconfigure(0, weight=1)
+        search_buttons.columnconfigure(1, weight=1)
+
+        self._button(search_buttons, "Search", self.search_tasks).grid(row=0, column=0, sticky="ew", padx=(0, 6))
+        self._button(search_buttons, "Clear Search", self.load_tasks).grid(row=0, column=1, sticky="ew", padx=(6, 0))
+
+        tk.Label(
+            self.list_card,
+            text="Existing Tasks",
+            font=(FONT_NAME, 13, "bold"),
+            bg=BG_CARD,
+            fg=TEXT_PRIMARY
+        ).pack(anchor="w", pady=(0, 8))
+
+        self.task_listbox = tk.Listbox(
+            self.list_card,
+            height=16,
+            font=(FONT_NAME, 10),
+            bg=BG_SECONDARY,
+            fg=TEXT_PRIMARY,
+            selectbackground=BLUE_ACCENT,
+            selectforeground="white",
+            relief="flat",
+            highlightthickness=1,
+            highlightbackground=BORDER_COLOR,
+            activestyle="none"
         )
-        self.search_button.pack(pady=2)
-
-        self.clear_search_button = tk.Button(
-            self.list_frame,
-            text="Clear Search",
-            command=self.load_tasks
-        )
-        self.clear_search_button.pack(pady=2)
-
-        tk.Label(self.list_frame, text="Existing Tasks").pack(pady=(10, 0))
-
-        self.task_listbox = tk.Listbox(self.list_frame, width=40, height=12)
-        self.task_listbox.pack(pady=5)
+        self.task_listbox.pack(fill="both", expand=True)
 
         self.task_listbox.bind("<<ListboxSelect>>", self.load_selected_task)
 
-        self.tasks = []
-        self.load_tasks()
-
     def remove_urgency_field(self):
-        """
-        Remove urgency from task dictionaries because it is only used for display,
-        not saved in the CSV file.
-        """
         for task in self.tasks:
             task.pop("urgency", None)
 
     def load_tasks(self):
-        """
-        Load all tasks from the controller and display them in the listbox.
-        """
+        self.search_entry.delete(0, tk.END)
         self.task_listbox.delete(0, tk.END)
+
         self.tasks = self.controller.get_all_tasks()
         self.remove_urgency_field()
 
@@ -124,9 +264,6 @@ class TaskFormView:
             self.task_listbox.insert(tk.END, display_text)
 
     def search_tasks(self):
-        """
-        Search tasks by task name using the controller.
-        """
         search_text = self.search_entry.get()
 
         self.task_listbox.delete(0, tk.END)
@@ -138,9 +275,6 @@ class TaskFormView:
             self.task_listbox.insert(tk.END, display_text)
 
     def load_selected_task(self, event):
-        """
-        Load the selected task details into the form for editing.
-        """
         selected = self.task_listbox.curselection()
 
         if not selected:
@@ -164,16 +298,13 @@ class TaskFormView:
         self.status_entry.set(task["status"])
 
     def add_task(self):
-        """
-        Add a new task using the form values.
-        """
-        name = self.name_entry.get()
-        module = self.module_entry.get()
-        deadline = self.deadline_entry.get()
-        priority = self.priority_entry.get()
-        status = self.status_entry.get()
-
-        result = self.controller.add_task(name, module, deadline, priority, status)
+        result = self.controller.add_task(
+            self.name_entry.get(),
+            self.module_entry.get(),
+            self.deadline_entry.get(),
+            self.priority_entry.get(),
+            self.status_entry.get()
+        )
 
         if isinstance(result, dict) and "error" in result:
             messagebox.showerror("Error", result["error"])
@@ -183,9 +314,6 @@ class TaskFormView:
             self.load_tasks()
 
     def update_task(self):
-        """
-        Update the selected task using the form values.
-        """
         if self.selected_task_id is None:
             messagebox.showerror("Error", "Please select a task to edit first.")
             return
@@ -199,7 +327,9 @@ class TaskFormView:
             status=self.status_entry.get()
         )
 
-        if result:
+        if isinstance(result, dict) and "error" in result:
+            messagebox.showerror("Error", result["error"])
+        elif result:
             messagebox.showinfo("Success", "Task updated!")
             self.clear_form()
             self.load_tasks()
@@ -207,9 +337,6 @@ class TaskFormView:
             messagebox.showerror("Error", "Task could not be updated.")
 
     def clear_form(self):
-        """
-        Clear all form fields and reset dropdowns.
-        """
         self.selected_task_id = None
 
         self.name_entry.delete(0, tk.END)
