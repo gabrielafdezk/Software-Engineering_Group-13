@@ -6,9 +6,9 @@ from tkinter import ttk
 
 FONT_NAME = "Segoe UI"
 
-BLUE = "#1a1a2e"
+BLUE = "#0A0D1A"
 LIGHT_BLUE = "#DFF1FF"
-SIDEBAR_BG = "#0C2C75"
+SIDEBAR_BG = "#0A0D1A"
 SIDEBAR_TEXT = "#F4F7FF"
 MUTED_TEXT = "#AAB7D8"
 GRID_LINE = "#DDDDDD"
@@ -41,14 +41,11 @@ class CalendarTask:
         self.priority = priority
 
 
-class CalendarWindow(tk.Toplevel):
+class CalendarView(tk.Frame):
     def __init__(self, master=None, home_command=None, tasks=None):
-        tk.Toplevel.__init__(self, master)
-
-        self.title("Calendar")
-        self.geometry("1280x760")
-        self.minsize(1050, 650)
+        tk.Frame.__init__(self, master)
         self.configure(bg="white")
+
 
         self.today = date.today()
         self.current_date = self.today
@@ -695,7 +692,25 @@ class CalendarWindow(tk.Toplevel):
 
 
 def open_calendar(master=None, home_command=None, tasks=None):
-    return CalendarWindow(master, home_command, tasks)
+    window = tk.Toplevel(master)
+    window.title("Calendar")
+    window.geometry("1280x760")
+    window.minsize(1050, 650)
+
+    def close_or_go_home():
+        if home_command is not None:
+            home_command()
+        window.destroy()
+
+    calendar_view = CalendarView(
+        window,
+        home_command=close_or_go_home,
+        tasks=tasks,
+    )
+    calendar_view.pack(fill="both", expand=True)
+
+    return window
+
 
 
 if __name__ == "__main__":

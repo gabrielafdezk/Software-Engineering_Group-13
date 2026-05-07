@@ -2,10 +2,13 @@ import os
 import sys
 import tkinter as tk
 
+from views.main_menu import MainMenu
 from controllers.app_controller import AppController
 from views.sidebar import Sidebar
 from views.splash import Splash
 from views.timer import TimerView
+from views.calendar_view import CalendarView
+from views.task_form_view import TaskFormView
 
 
 def _enable_dpi_awareness():
@@ -78,6 +81,7 @@ class App(tk.Tk):
         self.configure(bg=CONTENT_BG)
 
         self.controller = AppController(DATA_FILE)
+        self.controller.show_frame = self.show_frame
 
         self.sidebar = Sidebar(self, on_select=self.show_screen)
         self.sidebar.pack(side="left", fill="y")
@@ -92,21 +96,56 @@ class App(tk.Tk):
 
     def _build_screens(self):
         screens = {
-            "dashboard": PlaceholderScreen(self.container, "Dashboard", "Rishith"),
-            "tasks": PlaceholderScreen(self.container, "Tasks", "Rishith"),
-            "calendar": PlaceholderScreen(self.container, "Calendar", "Viv"),
-            "add_task": PlaceholderScreen(self.container, "Add Task", "Hashem"),
+            "dashboard": MainMenu(self.container, self.controller),
+
+            "tasks": TaskFormView(self.container, self.controller),
+
+            "calendar": CalendarView(
+                self.container,
+                home_command=lambda: self.show_screen("dashboard"),
+                tasks=self.controller.get_all_tasks(),
+            ),
+
+            "add_task": TaskFormView(self.container, self.controller),
+
             "timer": TimerView(self.container),
         }
+
         for screen in screens.values():
             screen.grid(row=0, column=0, sticky="nsew")
         return screens
 
+    def show_frame(self, name):
+        screen_map = {
+            "AddTask": "add_task",
+            "TaskList": "tasks",
+            "SearchFilter": "tasks",
+            "DeadlineTracker": "calendar",
+            "Timer": "timer",
+        }
+
+        key = screen_map.get(name, name)
+        self.show_screen(key)
+
+
     def show_screen(self, key):
         if key not in self.screens:
             return
-        self.screens[key].tkraise()
+
+        screen = self.screens[key]
+
+        if key == "dashboard" and hasattr(screen, "refresh"):
+            screen.refresh()
+
+        if key == "calendar" and hasattr(screen, "set_tasks"):
+            screen.set_tasks(self.controller.get_all_tasks())
+
+        if key in ["tasks", "add_task"] and hasattr(screen, "load_tasks"):
+            screen.load_tasks()
+
+        screen.tkraise()
         self.sidebar.set_active(key)
+
 
 
 def main():

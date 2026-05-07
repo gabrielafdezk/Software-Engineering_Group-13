@@ -184,8 +184,14 @@ class TaskFormView(tk.Frame):
         button_row.columnconfigure(0, weight=1)
         button_row.columnconfigure(1, weight=1)
 
+        button_row.columnconfigure(0, weight=1)
+        button_row.columnconfigure(1, weight=1)
+        button_row.columnconfigure(2, weight=1)
+
         self._button(button_row, "Add Task", self.add_task).grid(row=0, column=0, sticky="ew", padx=(0, 6))
-        self._button(button_row, "Update Task", self.update_task).grid(row=0, column=1, sticky="ew", padx=(6, 0))
+        self._button(button_row, "Update Task", self.update_task).grid(row=0, column=1, sticky="ew", padx=6)
+        self._button(button_row, "Delete Task", self.delete_task).grid(row=0, column=2, sticky="ew", padx=(6, 0))
+
 
         clear_btn = tk.Button(
             self.form_card,
@@ -335,6 +341,29 @@ class TaskFormView(tk.Frame):
             self.load_tasks()
         else:
             messagebox.showerror("Error", "Task could not be updated.")
+    
+    def delete_task(self):
+        if self.selected_task_id is None:
+            messagebox.showerror("Error", "Please select a task to delete first.")
+            return
+
+        confirm = messagebox.askyesno(
+            "Delete Task",
+            "Are you sure you want to delete this task?"
+        )
+
+        if not confirm:
+            return
+
+        result = self.controller.delete_task(self.selected_task_id)
+
+        if result:
+            messagebox.showinfo("Success", "Task deleted!")
+            self.clear_form()
+            self.load_tasks()
+        else:
+            messagebox.showerror("Error", "Task could not be deleted.")
+
 
     def clear_form(self):
         self.selected_task_id = None
